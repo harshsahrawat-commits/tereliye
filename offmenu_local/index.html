@@ -566,6 +566,7 @@
       const nodeVecs = [];
       const nodeDepths = [];
       const nodeUVs = [];
+      const currVecs = [];
 
       for (let i = 0; i < NODES; i++) {
         const phi = Math.acos(-1 + (2 * i) / NODES);
@@ -579,11 +580,13 @@
           r = RADIUS * Math.cbrt(Math.random() * 0.614);
         }
 
-        nodeVecs.push(new THREE.Vector3(
+        const vec = new THREE.Vector3(
           r * Math.sin(phi) * Math.cos(theta),
           r * Math.sin(phi) * Math.sin(theta),
           r * Math.cos(phi)
-        ));
+        );
+        nodeVecs.push(vec);
+        currVecs.push(vec.clone());
         nodeDepths.push(r / RADIUS);
 
         const v = phi / Math.PI;
@@ -776,14 +779,63 @@
         earthGrp.rotation.y = userRY + autoY;
         earthGrp.rotation.x = userRX;
 
+        let magnetPoint = null;
         if (earthPointsMesh) {
           raycaster.setFromCamera(mouseVec, camera);
           const intersects = raycaster.intersectObject(earthPointsMesh);
           if (intersects.length > 0) {
             hoveredNode = intersects[0].index;
+            magnetPoint = earthGrp.worldToLocal(intersects[0].point.clone());
           } else {
             hoveredNode = null;
           }
+        }
+
+        let needsGeomUpdate = false;
+        const lineArr = lineGeom.attributes.position.array;
+        
+        for (let i = 0; i < NODES; i++) {
+          const home = nodeVecs[i];
+          const curr = currVecs[i];
+
+          if (magnetPoint) {
+            const dist = home.distanceTo(magnetPoint);
+            if (dist < 15) {
+              const force = (1 - dist / 15) * 8; // Bulge out by 8 units max
+              // Push point outward from center of earth to create a 'swelling' effect
+              const dir = home.clone().normalize();
+              const target = home.clone().add(dir.multiplyScalar(force));
+              curr.lerp(target, 0.2);
+              needsGeomUpdate = true;
+            } else if (curr.distanceToSquared(home) > 0.01) {
+              curr.lerp(home, 0.1);
+              needsGeomUpdate = true;
+            }
+          } else if (curr.distanceToSquared(home) > 0.01) {
+            curr.lerp(home, 0.1);
+            needsGeomUpdate = true;
+          }
+
+          if (needsGeomUpdate) {
+            ptPos[i * 3] = curr.x;
+            ptPos[i * 3 + 1] = curr.y;
+            ptPos[i * 3 + 2] = curr.z;
+          }
+        }
+
+        if (needsGeomUpdate) {
+          ptGeom.attributes.position.needsUpdate = true;
+          for (let i = 0; i < conns.length / 2; i++) {
+            const cA = conns[i * 2];
+            const cB = conns[i * 2 + 1];
+            lineArr[i * 6] = currVecs[cA].x;
+            lineArr[i * 6 + 1] = currVecs[cA].y;
+            lineArr[i * 6 + 2] = currVecs[cA].z;
+            lineArr[i * 6 + 3] = currVecs[cB].x;
+            lineArr[i * 6 + 4] = currVecs[cB].y;
+            lineArr[i * 6 + 5] = currVecs[cB].z;
+          }
+          lineGeom.attributes.position.needsUpdate = true;
         }
 
         for (let s = 0; s < N_SIGS; s++) {
