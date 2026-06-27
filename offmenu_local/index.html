@@ -691,12 +691,13 @@
       sigGeom.setAttribute('position', new THREE.BufferAttribute(sigPos, 3));
 
       const sigMat = new THREE.PointsMaterial({
-        size: 4,
-        color: 0xffffff,
-        map: makeGlowTexture(255, 255, 200, 16),
+        size: 1.5,
+        color: 0xff6600, // Vibrant orange
+        map: makeGlowTexture(255, 255, 255, 16), // White core, color tint applied by material
         blending: THREE.AdditiveBlending,
         depthWrite: false,
         transparent: true,
+        opacity: 0.8, // Reduced opacity to limit the 'bloom' spread
       });
 
       earthGrp.add(new THREE.Points(sigGeom, sigMat));
@@ -842,7 +843,7 @@
           sigPos[s * 3 + 2] = a.z + (b.z - a.z) * sg.t;
         }
         sigGeom.attributes.position.needsUpdate = true;
-        sigMat.size = 4 + Math.sin(t * 2.8) * 1.8;
+        sigMat.size = 1.5 + Math.sin(t * 3.0) * 0.5; // Very tight, small signals
 
         renderer.render(scene, camera);
       };
