@@ -571,11 +571,11 @@
         const phi = Math.acos(-1 + (2 * i) / NODES);
         const theta = Math.sqrt(NODES * Math.PI) * phi;
         let r;
-        if (Math.random() > 0.25) {
-          // 75% of nodes forced into the outer shell (> 0.85) to form the green/blue surface
+        if (Math.random() > 0.08) {
+          // 92% of nodes forced into the outer shell (> 0.85) to keep the surface dense
           r = RADIUS * (0.85 + 0.15 * Math.random());
         } else {
-          // 25% nodes inside the core
+          // Only 8% nodes inside the core to reduce middle density and opacity
           r = RADIUS * Math.cbrt(Math.random() * 0.614);
         }
 
