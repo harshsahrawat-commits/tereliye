@@ -476,13 +476,12 @@
     //  NEURAL EARTH — Volumetric Core
     // ─────────────────────────────────────────────────────────────
 
-    const NODES = 800;   // total neurons
+    const NODES = 5000;   // Increased total neurons for dense earth map
     const RADIUS = 62;    // globe radius (world units)
-    const MAX_CONN = 22;    // max distance to form a synapse
-    const N_SIGS = 90;    // simultaneous signal pulses
-    const CAM_Z = 185;   // initial camera depth
-    const AUTO_ROT = 0.0016; // radians/frame auto-rotate speed
-    const STAR_COUNT = 2000;
+    const MAX_CONN = 12;  // Lower max distance for tighter visual continents
+    const N_SIGS = 350;   // More simultaneous signal pulses
+    const CAM_Z = 185;    // initial camera depth
+    const AUTO_ROT = 0.0016;
 
     const scene = new THREE.Scene();
     const H = 1400; // Fixed size for the globe
@@ -506,14 +505,6 @@
     canvas.style.pointerEvents = 'none';
     document.body.appendChild(canvas);
 
-    const layerColor = (nR) => {
-      if (nR < 0.15) return new THREE.Color(1.0, 1.0, 0.67);
-      if (nR < 0.35) return new THREE.Color(1.0, 0.53, 0.0);
-      if (nR < 0.60) return new THREE.Color(0.8, 0.14, 0.04);
-      if (nR < 0.82) return new THREE.Color(0.0, 0.67, 0.47);
-      return new THREE.Color(0.03, 0.47, 0.93);
-    };
-
     const makeGlowTexture = (r, g, b, sz = 32) => {
       const c = document.createElement('canvas');
       c.width = c.height = sz;
@@ -531,187 +522,333 @@
     const earthGrp = new THREE.Group();
     scene.add(earthGrp);
 
-    const nodeVecs = [];
-    const nodeDepths = [];
+    // --- Image Loading for Earth Map ---
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    // Using a specular map where water is white (bright) and land is black (dark)
+    img.src = 'https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg';
 
-    for (let i = 0; i < NODES; i++) {
-      const phi = Math.acos(-1 + (2 * i) / NODES);
-      const theta = Math.sqrt(NODES * Math.PI) * phi;
-      const r = RADIUS * Math.cbrt(Math.random());
+    img.onload = () => {
+      const imgCanvas = document.createElement('canvas');
+      imgCanvas.width = img.width;
+      imgCanvas.height = img.height;
+      const imgCtx = imgCanvas.getContext('2d', { willReadFrequently: true });
+      imgCtx.drawImage(img, 0, 0);
+      const imgData = imgCtx.getImageData(0, 0, img.width, img.height).data;
 
-      nodeVecs.push(new THREE.Vector3(
-        r * Math.sin(phi) * Math.cos(theta),
-        r * Math.sin(phi) * Math.sin(theta),
-        r * Math.cos(phi)
-      ));
-      nodeDepths.push(r / RADIUS);
-    }
+      const getEarthColor = (u, v) => {
+        let x = Math.floor(u * img.width);
+        let y = Math.floor(v * img.height);
+        x = Math.max(0, Math.min(x, img.width - 1));
+        y = Math.max(0, Math.min(y, img.height - 1));
+        const idx = (y * img.width + x) * 4;
 
-    const ptPos = new Float32Array(NODES * 3);
-    const ptCol = new Float32Array(NODES * 3);
+        // Specular map: brightness > 100 means water, else land
+        if (imgData[idx] > 100) {
+          return new THREE.Color(0.15, 0.55, 1.0); // Brighter Ocean Blue
+        } else {
+          return new THREE.Color(0.25, 1.0, 0.45); // Brighter Land Green
+        }
+      };
 
-    for (let i = 0; i < NODES; i++) {
-      const v = nodeVecs[i];
-      ptPos[i * 3] = v.x;
-      ptPos[i * 3 + 1] = v.y;
-      ptPos[i * 3 + 2] = v.z;
+      const layerColor = (nR, u, v) => {
+        if (nR < 0.85) {
+          // Core colors for internal volumetric nodes
+          if (nR < 0.25) return new THREE.Color(1.0, 1.0, 0.67);
+          if (nR < 0.50) return new THREE.Color(1.0, 0.53, 0.0);
+          if (nR < 0.70) return new THREE.Color(0.8, 0.14, 0.04);
+          return new THREE.Color(0.3, 0.05, 0.02);
+        }
+        // Surface nodes use the earth map
+        return getEarthColor(u, v);
+      };
 
-      const c = layerColor(nodeDepths[i]);
-      ptCol[i * 3] = c.r;
-      ptCol[i * 3 + 1] = c.g;
-      ptCol[i * 3 + 2] = c.b;
-    }
+      const nodeVecs = [];
+      const nodeDepths = [];
+      const nodeUVs = [];
 
-    const ptGeom = new THREE.BufferGeometry();
-    ptGeom.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
-    ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
+      for (let i = 0; i < NODES; i++) {
+        const phi = Math.acos(-1 + (2 * i) / NODES);
+        const theta = Math.sqrt(NODES * Math.PI) * phi;
+        let r;
+        if (Math.random() > 0.25) {
+          // 75% of nodes forced into the outer shell (> 0.85) to form the green/blue surface
+          r = RADIUS * (0.85 + 0.15 * Math.random());
+        } else {
+          // 25% nodes inside the core
+          r = RADIUS * Math.cbrt(Math.random() * 0.614);
+        }
 
-    const ptMat = new THREE.PointsMaterial({
-      size: 2.5,
-      vertexColors: true,
-      map: makeGlowTexture(255, 255, 255),
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      transparent: true,
-    });
+        nodeVecs.push(new THREE.Vector3(
+          r * Math.sin(phi) * Math.cos(theta),
+          r * Math.sin(phi) * Math.sin(theta),
+          r * Math.cos(phi)
+        ));
+        nodeDepths.push(r / RADIUS);
 
-    earthGrp.add(new THREE.Points(ptGeom, ptMat));
+        const v = phi / Math.PI;
+        // Adjust u so that the map wraps correctly (offset by 0.5 to center continents nicely)
+        let u = (theta % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) / (2 * Math.PI);
+        u = (u + 0.5) % 1.0;
+        nodeUVs.push({ u, v });
+      }
 
-    const lPos = [];
-    const lCol = [];
-    const conns = [];
+      const ptPos = new Float32Array(NODES * 3);
+      const ptCol = new Float32Array(NODES * 3);
 
-    for (let i = 0; i < NODES; i++) {
-      for (let j = i + 1; j < NODES; j++) {
-        const d = nodeVecs[i].distanceTo(nodeVecs[j]);
-        if (d < MAX_CONN) {
-          lPos.push(
-            nodeVecs[i].x, nodeVecs[i].y, nodeVecs[i].z,
-            nodeVecs[j].x, nodeVecs[j].y, nodeVecs[j].z,
-          );
+      for (let i = 0; i < NODES; i++) {
+        const vPos = nodeVecs[i];
+        ptPos[i * 3] = vPos.x;
+        ptPos[i * 3 + 1] = vPos.y;
+        ptPos[i * 3 + 2] = vPos.z;
 
-          const a = (1 - d / MAX_CONN) * 0.42;
-          const ci = layerColor(nodeDepths[i]);
-          const cj = layerColor(nodeDepths[j]);
-          lCol.push(ci.r * a, ci.g * a, ci.b * a,
-            cj.r * a, cj.g * a, cj.b * a);
+        const c = layerColor(nodeDepths[i], nodeUVs[i].u, nodeUVs[i].v);
+        ptCol[i * 3] = c.r;
+        ptCol[i * 3 + 1] = c.g;
+        ptCol[i * 3 + 2] = c.b;
+      }
 
-          conns.push(i, j);
+      const ptGeom = new THREE.BufferGeometry();
+      ptGeom.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
+      ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
+
+      const ptMat = new THREE.PointsMaterial({
+        size: 2.0, // smaller points for dense mesh
+        vertexColors: true,
+        map: makeGlowTexture(255, 255, 255),
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+      });
+
+      const earthPointsMesh = new THREE.Points(ptGeom, ptMat);
+      earthGrp.add(earthPointsMesh);
+
+      const lPos = [];
+      const lCol = [];
+      const conns = [];
+      const nodeConns = Array.from({length: NODES}, () => []);
+
+      // Build connections. Core nodes can connect over much longer distances!
+      const coreNodes = [];
+      for (let i = 0; i < NODES; i++) {
+        if (nodeDepths[i] < 0.85) coreNodes.push(i);
+      }
+
+      const connCounts = new Int32Array(NODES);
+      for (let i = 0; i < NODES; i++) {
+        for (let j = i + 1; j < NODES; j++) {
+          // Limit total connections per node to keep performance high and network looking like a web rather than a solid block
+          if (connCounts[i] > 18 || connCounts[j] > 18) continue;
+
+          const d = nodeVecs[i].distanceTo(nodeVecs[j]);
+          
+          // Outer shell connects locally. Core connects broadly.
+          let allowedDist = MAX_CONN;
+          if (nodeDepths[i] < 0.85 || nodeDepths[j] < 0.85) {
+             allowedDist = MAX_CONN * 3.5; 
+          }
+
+          if (d < allowedDist) {
+            // Further artificially limit deep-to-surface massive webs using chance
+            if (allowedDist > MAX_CONN && Math.random() > 0.15) continue;
+
+            lPos.push(
+              nodeVecs[i].x, nodeVecs[i].y, nodeVecs[i].z,
+              nodeVecs[j].x, nodeVecs[j].y, nodeVecs[j].z,
+            );
+
+            const a = Math.max(0.05, (1 - d / allowedDist)) * 0.42;
+            const ci = layerColor(nodeDepths[i], nodeUVs[i].u, nodeUVs[i].v);
+            const cj = layerColor(nodeDepths[j], nodeUVs[j].u, nodeUVs[j].v);
+
+            lCol.push(ci.r * a, ci.g * a, ci.b * a, cj.r * a, cj.g * a, cj.b * a);
+            const connIdx = conns.length / 2;
+            conns.push(i, j);
+            nodeConns[i].push(connIdx);
+            nodeConns[j].push(connIdx);
+            connCounts[i]++;
+            connCounts[j]++;
+          }
         }
       }
-    }
 
-    const lineGeom = new THREE.BufferGeometry();
-    lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(lPos, 3));
-    lineGeom.setAttribute('color', new THREE.Float32BufferAttribute(lCol, 3));
+      const lineGeom = new THREE.BufferGeometry();
+      lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(lPos, 3));
+      lineGeom.setAttribute('color', new THREE.Float32BufferAttribute(lCol, 3));
 
-    const lineMat = new THREE.LineBasicMaterial({
-      vertexColors: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      transparent: true,
-    });
+      const lineMat = new THREE.LineBasicMaterial({
+        vertexColors: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+      });
 
-    earthGrp.add(new THREE.LineSegments(lineGeom, lineMat));
+      earthGrp.add(new THREE.LineSegments(lineGeom, lineMat));
 
-    // Blue boundaries (outer wireframe and atmospheric shell) removed as requested
+      const sigPos = new Float32Array(N_SIGS * 3);
+      const sigGeom = new THREE.BufferGeometry();
+      sigGeom.setAttribute('position', new THREE.BufferAttribute(sigPos, 3));
 
-    const sigPos = new Float32Array(N_SIGS * 3);
-    const sigGeom = new THREE.BufferGeometry();
-    sigGeom.setAttribute('position', new THREE.BufferAttribute(sigPos, 3));
+      const sigMat = new THREE.PointsMaterial({
+        size: 4,
+        color: 0xffffff,
+        map: makeGlowTexture(255, 255, 200, 16),
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        transparent: true,
+      });
 
-    const sigMat = new THREE.PointsMaterial({
-      size: 5,
-      color: 0xffffff,
-      map: makeGlowTexture(255, 255, 200, 16),
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      transparent: true,
-    });
+      earthGrp.add(new THREE.Points(sigGeom, sigMat));
 
-    earthGrp.add(new THREE.Points(sigGeom, sigMat));
+      const nConns = conns.length / 2;
+      // Collect connections that touch the core
+      const coreConns = [];
+      for(let i=0; i<nConns; i++) {
+         const nA = conns[i*2], nB = conns[i*2+1];
+         if (nodeDepths[nA] < 0.6 || nodeDepths[nB] < 0.6) coreConns.push(i);
+      }
+      if(coreConns.length === 0) coreConns.push(0); // fallback
 
-    const nConns = conns.length / 2;
+      const sigs = Array.from({ length: N_SIGS }, () => ({
+        c: coreConns[Math.floor(Math.random() * coreConns.length)],
+        t: Math.random(),
+        s: 0.006 + Math.random() * 0.016,
+        d: Math.random() > 0.5 ? 1 : -1,
+      }));
 
-    const sigs = Array.from({ length: N_SIGS }, () => ({
-      c: Math.floor(Math.random() * nConns),
-      t: Math.random(),
-      s: 0.006 + Math.random() * 0.016,
-      d: Math.random() > 0.5 ? 1 : -1,
-    }));
+      const raycaster = new THREE.Raycaster();
+      raycaster.params.Points.threshold = 5.0;
+      const mouseVec = new THREE.Vector2(-1000, -1000);
+      let hoveredNode = null;
 
-    // (Star field removed so only the globe is visible)
+      canvas.addEventListener('mouseleave', () => {
+        mouseVec.x = -1000;
+        mouseVec.y = -1000;
+        hoveredNode = null;
+      });
 
-    let dragGlobe = false;
-    let prevGlobe = { x: 0, y: 0 };
-    let userRX = 0, userRY = 0, autoY = 0;
+      let dragGlobe = false;
+      let prevGlobe = { x: 0, y: 0 };
+      let userRX = 0, userRY = 0, autoY = 0;
 
-    canvas.addEventListener('mousedown', e => {
-      dragGlobe = true;
-      prevGlobe = { x: e.clientX, y: e.clientY };
-    });
-    window.addEventListener('mouseup', () => { dragGlobe = false; });
-    window.addEventListener('mousemove', e => {
-      if (!dragGlobe) return;
-      userRY += (e.clientX - prevGlobe.x) * 0.005;
-      userRX += (e.clientY - prevGlobe.y) * 0.005;
-      userRX = Math.max(-1.4, Math.min(1.4, userRX));
-      prevGlobe = { x: e.clientX, y: e.clientY };
-    });
+      canvas.addEventListener('mousedown', e => {
+        dragGlobe = true;
+        prevGlobe = { x: e.clientX, y: e.clientY };
+      });
+      window.addEventListener('mouseup', () => { dragGlobe = false; });
+      window.addEventListener('mousemove', e => {
+        const rect = canvas.getBoundingClientRect();
+        mouseVec.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        mouseVec.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
 
-    canvas.addEventListener('wheel', e => {
-      camera.position.z = Math.max(95, Math.min(350, camera.position.z + e.deltaY * 0.07));
-    }, { passive: true });
+        if (!dragGlobe) return;
+        userRY += (e.clientX - prevGlobe.x) * 0.005;
+        userRX += (e.clientY - prevGlobe.y) * 0.005;
+        userRX = Math.max(-1.4, Math.min(1.4, userRX));
+        prevGlobe = { x: e.clientX, y: e.clientY };
+      });
 
-    canvas.addEventListener('touchstart', e => {
-      dragGlobe = true;
-      prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }, { passive: true });
-    window.addEventListener('touchend', () => { dragGlobe = false; });
-    window.addEventListener('touchmove', e => {
-      if (!dragGlobe) return;
-      e.preventDefault();
-      userRY += (e.touches[0].clientX - prevGlobe.x) * 0.005;
-      userRX += (e.touches[0].clientY - prevGlobe.y) * 0.005;
-      userRX = Math.max(-1.4, Math.min(1.4, userRX));
-      prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }, { passive: false });
+      canvas.addEventListener('wheel', e => {
+        camera.position.z = Math.max(95, Math.min(350, camera.position.z + e.deltaY * 0.07));
+      }, { passive: true });
 
-    const animateGlobe = (time) => {
+      canvas.addEventListener('touchstart', e => {
+        dragGlobe = true;
+        prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      window.addEventListener('touchend', () => { dragGlobe = false; });
+      window.addEventListener('touchmove', e => {
+        if (!dragGlobe) return;
+        e.preventDefault();
+        userRY += (e.touches[0].clientX - prevGlobe.x) * 0.005;
+        userRX += (e.touches[0].clientY - prevGlobe.y) * 0.005;
+        userRX = Math.max(-1.4, Math.min(1.4, userRX));
+        prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: false });
+
+      const animateGlobe = (time) => {
+        requestAnimationFrame(animateGlobe);
+        const t = time * 0.001;
+
+        autoY += AUTO_ROT;
+        earthGrp.rotation.y = userRY + autoY;
+        earthGrp.rotation.x = userRX;
+
+        if (earthPointsMesh) {
+          raycaster.setFromCamera(mouseVec, camera);
+          const intersects = raycaster.intersectObject(earthPointsMesh);
+          if (intersects.length > 0) {
+            hoveredNode = intersects[0].index;
+          } else {
+            hoveredNode = null;
+          }
+        }
+
+        for (let s = 0; s < N_SIGS; s++) {
+          const sg = sigs[s];
+          sg.t += sg.s * sg.d;
+
+          if (sg.t > 1 || sg.t < 0) {
+            const reachedNode = sg.d > 0 ? conns[sg.c * 2 + 1] : conns[sg.c * 2];
+            let nextConn = -1;
+            let nextDir = 1;
+
+            if (hoveredNode !== null) {
+              let bestDist = Infinity;
+              const options = nodeConns[reachedNode];
+              if (options) {
+                for (let i = 0; i < options.length; i++) {
+                  const cIdx = options[i];
+                  const nA = conns[cIdx * 2];
+                  const nB = conns[cIdx * 2 + 1];
+                  const otherNode = (nA === reachedNode) ? nB : nA;
+                  const dist = nodeVecs[otherNode].distanceToSquared(nodeVecs[hoveredNode]);
+                  if (dist < bestDist) {
+                    bestDist = dist;
+                    nextConn = cIdx;
+                    nextDir = (nA === reachedNode) ? 1 : -1;
+                  }
+                }
+              }
+            }
+
+            if (nextConn === -1) {
+              const options = nodeConns[reachedNode];
+              if (options && options.length > 0) {
+                nextConn = options[Math.floor(Math.random() * options.length)];
+                const nA = conns[nextConn * 2];
+                nextDir = (nA === reachedNode) ? 1 : -1;
+              } else {
+                nextConn = coreConns[Math.floor(Math.random() * coreConns.length)];
+                nextDir = Math.random() > 0.5 ? 1 : -1;
+              }
+            }
+
+            sg.c = nextConn;
+            sg.d = nextDir;
+            sg.t = sg.d > 0 ? 0 : 1;
+            sg.s = 0.006 + Math.random() * 0.018;
+            if (hoveredNode !== null) sg.s *= 1.5;
+          }
+
+          const ci = conns[sg.c * 2];
+          const cj = conns[sg.c * 2 + 1];
+          const a = nodeVecs[ci];
+          const b = nodeVecs[cj];
+
+          sigPos[s * 3] = a.x + (b.x - a.x) * sg.t;
+          sigPos[s * 3 + 1] = a.y + (b.y - a.y) * sg.t;
+          sigPos[s * 3 + 2] = a.z + (b.z - a.z) * sg.t;
+        }
+        sigGeom.attributes.position.needsUpdate = true;
+        sigMat.size = 4 + Math.sin(t * 2.8) * 1.8;
+
+        renderer.render(scene, camera);
+      };
+
       requestAnimationFrame(animateGlobe);
-      const t = time * 0.001;
-
-      autoY += AUTO_ROT;
-      earthGrp.rotation.y = userRY + autoY;
-      earthGrp.rotation.x = userRX;
-
-      for (let s = 0; s < N_SIGS; s++) {
-        const sg = sigs[s];
-        sg.t += sg.s * sg.d;
-
-        if (sg.t > 1 || sg.t < 0) {
-          sg.c = Math.floor(Math.random() * nConns);
-          sg.t = sg.d > 0 ? 0 : 1;
-          sg.s = 0.006 + Math.random() * 0.018;
-          sg.d = Math.random() > 0.5 ? 1 : -1;
-        }
-
-        const ci = conns[sg.c * 2];
-        const cj = conns[sg.c * 2 + 1];
-        const a = nodeVecs[ci];
-        const b = nodeVecs[cj];
-
-        sigPos[s * 3] = a.x + (b.x - a.x) * sg.t;
-        sigPos[s * 3 + 1] = a.y + (b.y - a.y) * sg.t;
-        sigPos[s * 3 + 2] = a.z + (b.z - a.z) * sg.t;
-      }
-      sigGeom.attributes.position.needsUpdate = true;
-      sigMat.size = 4 + Math.sin(t * 2.8) * 1.8;
-
-      renderer.render(scene, camera);
     };
-
-    requestAnimationFrame(animateGlobe);
 
     // (Resize listener removed since canvas is fixed size)
   </script>
