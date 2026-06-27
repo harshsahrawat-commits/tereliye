@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/offmenu_local/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/offmenu_local/$1"
+    }
+  ]
+}
