@@ -545,9 +545,9 @@
 
         // Specular map: brightness > 100 means water, else land
         if (imgData[idx] > 100) {
-          return new THREE.Color(0.0, 0.8, 1.0); // Neon Ocean Blue
+          return new THREE.Color(0.05, 0.35, 0.75); // Ocean Blue
         } else {
-          return new THREE.Color(0.3, 1.0, 0.0); // Neon Land Green
+          return new THREE.Color(0.15, 0.55, 0.15); // Dark Grass Green
         }
       };
 
