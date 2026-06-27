@@ -545,9 +545,9 @@
 
         // Specular map: brightness > 100 means water, else land
         if (imgData[idx] > 100) {
-          return new THREE.Color(0.15, 0.55, 1.0); // Brighter Ocean Blue
+          return new THREE.Color(0.0, 0.8, 1.0); // Neon Ocean Blue
         } else {
-          return new THREE.Color(0.25, 1.0, 0.45); // Brighter Land Green
+          return new THREE.Color(0.3, 1.0, 0.0); // Neon Land Green
         }
       };
 
@@ -616,7 +616,7 @@
       ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
 
       const ptMat = new THREE.PointsMaterial({
-        size: 2.35, // smaller points for dense mesh
+        size: 3.8, // larger points for high intensity bloom
         vertexColors: true,
         map: makeGlowTexture(255, 255, 255),
         blending: THREE.AdditiveBlending,
@@ -661,7 +661,7 @@
               nodeVecs[j].x, nodeVecs[j].y, nodeVecs[j].z,
             );
 
-            const a = Math.max(0.05, (1 - d / allowedDist)) * 0.42;
+            const a = Math.max(0.05, (1 - d / allowedDist)) * 0.85; // Doubled line intensity
             const ci = layerColor(nodeDepths[i], nodeUVs[i].u, nodeUVs[i].v);
             const cj = layerColor(nodeDepths[j], nodeUVs[j].u, nodeUVs[j].v);
 
