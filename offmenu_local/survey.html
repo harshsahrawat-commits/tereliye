@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium 8-Step Survey</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            foreground: 'var(--foreground)',
+            background: 'var(--background)',
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lenis for smooth scrolling -->
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
+  <style>
+    /* CSS Variables for Theme */
+    :root {
+      --background: #ffffff;
+      --foreground: #000000;
+    }
+    html.dark {
+      --background: #0b0b0b;
+      --foreground: #ffffff;
+    }
+
+    /* Hide default cursor on the whole page */
+    body {
+      cursor: none;
+      background-color: var(--background);
+      color: var(--foreground);
+      overflow-x: hidden;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    
+    /* Make sure all interactive elements also hide the default cursor */
+    a, button, input, select, textarea, .interactive {
+      cursor: none !important;
+    }
+
+    /* Custom Cursor Wrapper */
+    #cursor-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      will-change: transform;
+    }
+    
+    /* The actual dot */
+    #cursor-dot {
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.3s cubic-bezier(0.25, 1, 0.5, 1), height 0.3s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.3s;
+      will-change: width, height;
+    }
+
+    /* Hover states for the cursor */
+    .cursor-hover #cursor-dot {
+      width: 48px;
+      height: 48px;
+      background-color: rgba(255, 255, 255, 1);
+    }
+    
+    .cursor-hover-small #cursor-dot {
+      width: 24px;
+      height: 24px;
+    }
+
+    /* Input styling for survey */
+    .survey-input {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(128, 128, 128, 0.3);
+      border-radius: 0;
+      padding: 10px 0;
+      font-size: 2rem;
+      width: 100%;
+      color: var(--foreground);
+      transition: border-color 0.3s ease;
+    }
+    .survey-input:focus {
+      outline: none;
+      border-color: var(--foreground);
+    }
+    .survey-input::placeholder {
+      color: rgba(128, 128, 128, 0.5);
+    }
+
+    /* Step Transitions */
+    .step-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100%;
+      max-width: 800px;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+    .step-container.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translate(-50%, -50%);
+      z-index: 10;
+    }
+    .step-container.previous {
+      transform: translate(-50%, -100%);
+    }
+    .step-container.next {
+      transform: translate(-50%, 0%);
+    }
+
+    /* Top right menu */
+    .nav-toggle-wrapper {
+      transition: color 0.3s ease;
+    }
+  </style>
+</head>
+<body class="antialiased min-h-screen relative">
+  
+  <!-- Custom Cursor -->
+  <div id="cursor-wrapper">
+    <div id="cursor-dot"></div>
+  </div>
+
+  <!-- Header / Nav -->
+  <header class="fixed top-0 left-0 right-0 z-50 p-6 md:p-10 flex justify-between items-center">
+    <!-- Logo placeholder -->
+    <a href="#" class="interactive text-2xl font-bold tracking-tighter">OFFMENU.</a>
+
+    <!-- Top Right Nav & Theme Toggle -->
+    <div class="nav-container h-10 flex items-center gap-4">
+      <div class="nav-toggle-wrapper flex items-center justify-end gap-2 text-foreground">
+        
+        <!-- Theme Toggle (Moon/Sun) -->
+        <button id="theme-toggle-btn" class="interactive z-50 w-10 h-10 flex items-center justify-center cursor-none group/theme-toggle transition-transform duration-300 hover:scale-110">
+          <svg width="20" height="20" viewBox="0 0 20 20" class="text-foreground">
+            <defs>
+              <mask id="moon-mask">
+                <rect x="0" y="0" width="20" height="20" fill="white"></rect>
+                <circle r="7" fill="black" cx="28" cy="-4" id="moon-mask-circle" class="transition-all duration-500 ease-in-out"></circle>
+              </mask>
+            </defs>
+            <circle cx="10" cy="10" r="7" fill="currentColor" mask="url(#moon-mask)"></circle>
+          </svg>
+        </button>
+
+        <!-- Hamburger Menu Toggle -->
+        <button id="menu-toggle-btn" class="interactive nav-toggle group/nav-toggle relative w-10 h-10 flex items-center justify-center cursor-none transition-transform duration-300 hover:scale-110">
+          <svg class="hm" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="4" cy="4" r="2"></circle>
+            <circle cx="12" cy="4" r="2"></circle>
+            <circle cx="20" cy="4" r="2"></circle>
+            <circle cx="4" cy="12" r="2"></circle>
+            <circle cx="12" cy="12" r="2"></circle>
+            <circle cx="20" cy="12" r="2"></circle>
+            <circle cx="4" cy="20" r="2"></circle>
+            <circle cx="12" cy="20" r="2"></circle>
+            <circle cx="20" cy="20" r="2"></circle>
+          </svg>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Survey Main Content -->
+  <main class="relative w-full h-screen overflow-hidden px-6">
+    
+    <!-- Progress Indicator -->
+    <div class="fixed bottom-10 left-10 text-sm font-medium opacity-50 tracking-widest uppercase z-40">
+      Step <span id="current-step-display">1</span> of 8
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-container active" id="step-1">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">01 / Introduction</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">Let's start with your name.</h2>
+      <input type="text" class="interactive survey-input" placeholder="John Doe" id="input-1" autocomplete="off">
+      <div class="mt-12">
+        <button class="interactive px-8 py-4 bg-foreground text-background rounded-full font-medium text-lg flex items-center gap-2 hover:opacity-80 transition-opacity" onclick="nextStep(1)">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-container next" id="step-2">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">02 / Contact</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">What's your email address?</h2>
+      <input type="email" class="interactive survey-input" placeholder="john@company.com" id="input-2" autocomplete="off">
+      <div class="mt-12 flex gap-4">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(2)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <button class="interactive px-8 py-4 bg-foreground text-background rounded-full font-medium text-lg flex items-center gap-2 hover:opacity-80 transition-opacity" onclick="nextStep(2)">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-container next" id="step-3">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">03 / Business</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">What company are you with?</h2>
+      <input type="text" class="interactive survey-input" placeholder="Company Name" id="input-3" autocomplete="off">
+      <div class="mt-12 flex gap-4">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(3)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <button class="interactive px-8 py-4 bg-foreground text-background rounded-full font-medium text-lg flex items-center gap-2 hover:opacity-80 transition-opacity" onclick="nextStep(3)">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-container next" id="step-4">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">04 / Investment</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">What is your estimated budget?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(4)">Under $50k</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(4)">$50k - $100k</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(4)">$100k - $250k</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(4)">$250k+</button>
+      </div>
+      <div class="mt-8">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(4)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step-container next" id="step-5">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">05 / Timing</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">When do you need this completed?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(5)">ASAP</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(5)">1 - 3 Months</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(5)">3 - 6 Months</button>
+        <button class="interactive border border-foreground/20 p-6 rounded-2xl text-left text-xl hover:border-foreground transition-colors" onclick="nextStep(5)">Flexible</button>
+      </div>
+      <div class="mt-8">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(5)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step-container next" id="step-6">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">06 / Details</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">Tell us about your project.</h2>
+      <textarea class="interactive survey-input text-xl min-h-[150px] resize-none" placeholder="We are looking to build..." id="input-6" autocomplete="off"></textarea>
+      <div class="mt-12 flex gap-4">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(6)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <button class="interactive px-8 py-4 bg-foreground text-background rounded-full font-medium text-lg flex items-center gap-2 hover:opacity-80 transition-opacity" onclick="nextStep(6)">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step-container next" id="step-7">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">07 / Discovery</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">How did you hear about us?</h2>
+      <input type="text" class="interactive survey-input" placeholder="Twitter, Referral, etc." id="input-7" autocomplete="off">
+      <div class="mt-12 flex gap-4">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(7)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <button class="interactive px-8 py-4 bg-foreground text-background rounded-full font-medium text-lg flex items-center gap-2 hover:opacity-80 transition-opacity" onclick="nextStep(7)">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 8 -->
+    <div class="step-container next" id="step-8">
+      <p class="text-sm font-medium tracking-widest text-gray-500 uppercase mb-4">08 / Final</p>
+      <h2 class="text-4xl md:text-6xl font-medium mb-10 leading-tight">Ready to send?</h2>
+      <p class="text-xl text-gray-400 mb-12">We'll get back to you within 24 hours.</p>
+      <div class="mt-12 flex gap-4">
+        <button class="interactive p-4 border border-foreground/20 rounded-full text-foreground hover:bg-foreground/10 transition-colors" onclick="prevStep(8)">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"></path></svg>
+        </button>
+        <button class="interactive px-10 py-5 bg-foreground text-background rounded-full font-medium text-xl flex items-center gap-2 hover:opacity-80 transition-all hover:scale-105" onclick="submitSurvey()">
+          Submit Request
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /* =========================================================================
+       1. Smooth Scrolling Implementation (using Lenis)
+       ========================================================================= */
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    /* =========================================================================
+       2. Custom Cursor Implementation (Linear Interpolation)
+       ========================================================================= */
+    const cursorWrapper = document.getElementById('cursor-wrapper');
+    
+    // Target mouse coordinates
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    
+    // Current cursor coordinates
+    let cursorX = mouseX;
+    let cursorY = mouseY;
+    
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if(cursorWrapper.style.opacity === "0") {
+          cursorWrapper.style.opacity = "1";
+      }
+    });
+
+    document.addEventListener("mouseleave", () => { cursorWrapper.style.opacity = "0"; });
+    document.addEventListener("mouseenter", () => { cursorWrapper.style.opacity = "1"; });
+
+    function bindInteractiveCursor() {
+      const interactiveElements = document.querySelectorAll('a, button, input, textarea, .interactive');
+      interactiveElements.forEach(el => {
+        // Prevent duplicate bindings
+        el.removeEventListener('mouseenter', addHover);
+        el.removeEventListener('mouseleave', removeHover);
+        el.addEventListener('mouseenter', addHover);
+        el.addEventListener('mouseleave', removeHover);
+      });
+    }
+
+    function addHover() { cursorWrapper.classList.add('cursor-hover'); }
+    function removeHover() { cursorWrapper.classList.remove('cursor-hover'); }
+
+    bindInteractiveCursor();
+
+    function animateCursor() {
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      cursorWrapper.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    /* =========================================================================
+       3. Theme Toggle (Dark/Light Mode)
+       ========================================================================= */
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    const htmlEl = document.documentElement;
+    const moonCircle = document.getElementById('moon-mask-circle');
+
+    themeBtn.addEventListener('click', () => {
+      if (htmlEl.classList.contains('dark')) {
+        // Switch to Light
+        htmlEl.classList.remove('dark');
+        moonCircle.style.transform = 'translate(-13px, 9px)'; // Move mask to make it look like a sun
+      } else {
+        // Switch to Dark
+        htmlEl.classList.add('dark');
+        moonCircle.style.transform = 'translate(0px, 0px)'; // Reset mask to look like a crescent moon
+      }
+    });
+
+    /* =========================================================================
+       4. Survey State Machine
+       ========================================================================= */
+    let currentStep = 1;
+    const totalSteps = 8;
+    const stepDisplay = document.getElementById('current-step-display');
+
+    function updateView(direction, oldStep, newStep) {
+      const oldEl = document.getElementById(`step-${oldStep}`);
+      const newEl = document.getElementById(`step-${newStep}`);
+      
+      if (oldEl) {
+        oldEl.classList.remove('active');
+        // If moving forward, old goes up (previous), if backward, old goes down (next)
+        oldEl.classList.add(direction === 'next' ? 'previous' : 'next');
+        oldEl.classList.remove(direction === 'next' ? 'next' : 'previous');
+      }
+
+      if (newEl) {
+        newEl.classList.remove('previous', 'next');
+        newEl.classList.add('active');
+        
+        // Auto focus the input if there is one
+        const input = newEl.querySelector('input, textarea');
+        if(input) {
+          setTimeout(() => input.focus(), 600); // Wait for transition
+        }
+      }
+
+      stepDisplay.innerText = newStep;
+    }
+
+    function nextStep(step) {
+      if (step < totalSteps) {
+        currentStep = step + 1;
+        updateView('next', step, currentStep);
+      }
+    }
+
+    function prevStep(step) {
+      if (step > 1) {
+        currentStep = step - 1;
+        updateView('prev', step, currentStep);
+      }
+    }
+
+    function submitSurvey() {
+      // Simulate submission
+      const el = document.getElementById('step-8');
+      el.innerHTML = `
+        <div class="text-center mt-20">
+          <svg class="w-24 h-24 mx-auto mb-8 text-green-500" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <h2 class="text-4xl md:text-6xl font-medium mb-6">Received.</h2>
+          <p class="text-xl text-gray-400">Thank you. We will be in touch shortly.</p>
+        </div>
+      `;
+      bindInteractiveCursor();
+    }
+
+    // Allow Enter key to proceed
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && currentStep < totalSteps) {
+        // Prevent default submission
+        e.preventDefault();
+        // Ignore Enter if it's the textarea
+        if (document.activeElement.tagName === 'TEXTAREA') return;
+        nextStep(currentStep);
+      }
+    });
+
+    // Focus first input on load
+    window.onload = () => {
+      document.getElementById('input-1').focus();
+    }
+
+  </script>
+</body>
+</html>

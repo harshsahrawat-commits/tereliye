@@ -1,0 +1,15 @@
+User-Agent: *
+Allow: /
+Disallow: /cms/
+Disallow: /api/
+Disallow: /proposals/
+
+User-Agent: GPTBot
+User-Agent: ChatGPT-User
+User-Agent: CCBot
+User-Agent: anthropic-ai
+User-Agent: Google-Extended
+User-Agent: FacebookBot
+Disallow: /
+
+Sitemap: https://om2026.vercel.app/sitemap.xml

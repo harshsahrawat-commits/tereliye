@@ -1,0 +1,20 @@
+:root {
+  --color-background: #fdfdfc;
+  --color-foreground: #12110d;
+  --color-border: #00000040;
+}
+:root.dark, .theme-dark {
+  --color-background: #12110d;
+  --color-foreground: #edecec;
+  --color-border: #ffffff1a;
+}
+html.dark .theme-inverted {
+  --color-background: #fdfdfc;
+  --color-foreground: #12110d;
+  --color-border: #00000040;
+}
+.theme-inverted {
+  --color-background: #12110d;
+  --color-foreground: #edecec;
+  --color-border: #ffffff1a;
+}

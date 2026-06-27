@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Interactive Cursor Rebuild</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lenis for smooth scrolling -->
+  <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
+  <style>
+    /* Hide default cursor on the whole page */
+    body {
+      cursor: none;
+      background-color: #0b0b0b;
+      color: #ffffff;
+      overflow-x: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    /* Make sure all interactive elements also hide the default cursor */
+    a, button, input, select, textarea, .interactive {
+      cursor: none;
+    }
+
+    /* 
+      Cursor Wrapper: 
+      - Fixed position so it floats above everything
+      - mix-blend-mode: difference creates the color-inverting effect 
+      - z-index: 9999 to stay on top
+      - pointer-events: none so it doesn't block clicks
+    */
+    #cursor-wrapper {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 9999;
+      mix-blend-mode: difference;
+      will-change: transform;
+    }
+    
+    /* 
+      The actual dot inside the wrapper.
+      Using translate(-50%, -50%) centers it exactly on the mouse coordinates.
+    */
+    #cursor-dot {
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.2s cubic-bezier(0.25, 1, 0.5, 1), height 0.2s cubic-bezier(0.25, 1, 0.5, 1), background-color 0.2s;
+      will-change: width, height;
+    }
+
+    /* Hover state: when hovering over links/buttons, the cursor expands */
+    .cursor-hover #cursor-dot {
+      width: 48px;
+      height: 48px;
+      background-color: rgba(255, 255, 255, 1);
+    }
+    
+    /* Subdued hover for specific elements if needed */
+    .cursor-hover-small #cursor-dot {
+      width: 24px;
+      height: 24px;
+    }
+  </style>
+</head>
+<body class="antialiased">
+  
+  <!-- Custom Cursor -->
+  <div id="cursor-wrapper">
+    <div id="cursor-dot"></div>
+  </div>
+
+  <main class="relative w-full p-8 md:p-24 min-h-[200vh]">
+    <div class="max-w-4xl mx-auto flex flex-col gap-16 mt-20">
+      
+      <div>
+        <h1 class="text-5xl md:text-7xl font-medium tracking-tight leading-tight mb-6">
+          AI-native studio building brands.
+        </h1>
+        <p class="text-xl text-gray-400 max-w-2xl leading-relaxed">
+          This is a complete rebuild of the interactivity from the target website. It includes the smooth, interpolating dot cursor with the <code>mix-blend-difference</code> effect, expansion on hover, and buttery smooth page scrolling.
+        </p>
+      </div>
+
+      <div class="h-[1px] w-full bg-white/10 my-8"></div>
+
+      <div class="flex flex-col gap-8">
+        <a href="#" class="interactive group block p-12 border border-white/10 rounded-3xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors duration-500">
+          <h2 class="text-4xl font-medium mb-3">Hover me (Link)</h2>
+          <p class="text-gray-400 text-lg">The cursor detects the hover event and dynamically scales up using a cubic-bezier CSS transition, mimicking the exact feel of offmenu.design.</p>
+        </a>
+
+        <div class="flex flex-wrap gap-4">
+          <button class="interactive bg-white text-black px-8 py-4 rounded-full text-lg font-medium hover:scale-105 transition-transform duration-300">
+            Primary Button
+          </button>
+          <button class="interactive bg-transparent border border-white/20 px-8 py-4 rounded-full text-lg font-medium hover:bg-white/10 transition-colors duration-300">
+            Secondary Button
+          </button>
+        </div>
+      </div>
+      
+      <div class="h-32"></div>
+      
+      <div>
+        <h2 class="text-4xl font-medium mb-6">Smooth Scrolling</h2>
+        <p class="text-xl text-gray-400 max-w-2xl leading-relaxed">
+          The scrolling movement is powered by Lenis, overriding the native browser scroll with a mathematical easing function. Notice how both the scroll and the custom cursor feel decoupled from standard rigid browser mechanics.
+        </p>
+      </div>
+      
+    </div>
+  </main>
+
+  <script>
+    /* =========================================================================
+       1. Smooth Scrolling Implementation (using Lenis)
+       ========================================================================= */
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      direction: 'vertical',
+      gestureDirection: 'vertical',
+      smooth: true,
+      mouseMultiplier: 1,
+      smoothTouch: false,
+      touchMultiplier: 2,
+      infinite: false,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    /* =========================================================================
+       2. Custom Cursor Implementation (Linear Interpolation)
+       ========================================================================= */
+    const cursorWrapper = document.getElementById('cursor-wrapper');
+    const interactiveElements = document.querySelectorAll('a, button, .interactive');
+    
+    // Target mouse coordinates
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    
+    // Current cursor coordinates (lags behind mouse)
+    let cursorX = mouseX;
+    let cursorY = mouseY;
+    
+    // Listen to mouse movement and update target coordinates
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      
+      // Make cursor visible immediately on first move if it was hidden
+      if(cursorWrapper.style.opacity === "0") {
+          cursorWrapper.style.opacity = "1";
+      }
+    });
+
+    // Handle mouse leaving/entering the window entirely
+    document.addEventListener("mouseleave", () => { cursorWrapper.style.opacity = "0"; });
+    document.addEventListener("mouseenter", () => { cursorWrapper.style.opacity = "1"; });
+
+    // Add event listeners to scale cursor up when hovering interactive elements
+    interactiveElements.forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        cursorWrapper.classList.add('cursor-hover');
+      });
+      el.addEventListener('mouseleave', () => {
+        cursorWrapper.classList.remove('cursor-hover');
+      });
+    });
+
+    // The animation loop that creates the smooth following effect
+    function animateCursor() {
+      // Lerp (Linear Interpolation) formula: current += (target - current) * friction
+      // A friction value around 0.15 - 0.2 gives that smooth, weighty drag effect.
+      cursorX += (mouseX - cursorX) * 0.15;
+      cursorY += (mouseY - cursorY) * 0.15;
+      
+      // Apply the position via translate3d for hardware acceleration
+      cursorWrapper.style.transform = `translate3d(${cursorX}px, ${cursorY}px, 0)`;
+      
+      requestAnimationFrame(animateCursor);
+    }
+    
+    // Kick off the loop
+    animateCursor();
+  </script>
+</body>
+</html>
