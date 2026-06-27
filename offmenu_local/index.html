@@ -616,7 +616,7 @@
       ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
 
       const ptMat = new THREE.PointsMaterial({
-        size: 3.8, // larger points for high intensity bloom
+        size: 2.35, // larger points for high intensity bloom
         vertexColors: true,
         map: makeGlowTexture(255, 255, 255),
         blending: THREE.AdditiveBlending,
