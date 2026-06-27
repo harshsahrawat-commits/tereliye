@@ -31,16 +31,19 @@
       --foreground: #12110d;
       --color-border: #00000040;
     }
+
     html.dark {
       --background: #12110d;
       --foreground: #edecec;
       --color-border: #ffffff1a;
     }
+
     html.dark .theme-inverted {
       --background: #fdfdfc;
       --foreground: #12110d;
       --color-border: #00000040;
     }
+
     .theme-inverted {
       --background: #12110d;
       --foreground: #edecec;
@@ -102,65 +105,39 @@
     /* Menu Overlay Styles */
     #nav-overlay {
       position: fixed;
-      top: 1.5rem;
-      right: 1.5rem;
-      z-index: 50;
+      top: 1rem;
+      right: 1rem;
+      z-index: 9999;
       pointer-events: none;
-      /* Let clicks pass through when closed */
     }
 
     #nav-overlay.open {
       pointer-events: auto;
     }
 
-    .nav-menu-bg {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 40px;
-      height: 40px;
-      background: var(--background);
-      border-radius: 20px;
-      transform-origin: top right;
-      transition: width 0.5s cubic-bezier(0.85, 0, 0.15, 1), height 0.5s cubic-bezier(0.85, 0, 0.15, 1), border-radius 0.5s ease;
-      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
-      border: 1px solid rgba(128, 128, 128, 0.1);
+    .nav-toggle-wrapper {
+      pointer-events: auto;
     }
 
-    #nav-overlay.open .nav-menu-bg {
-      width: 280px;
-      height: 360px;
-      border-radius: 24px;
+    .nav-menu-container {
+      transition: width 0.3s cubic-bezier(0.85, 0, 0.15, 1), height 0.3s cubic-bezier(0.85, 0, 0.15, 1), opacity 0.2s ease;
     }
 
-    .nav-menu-content {
-      position: absolute;
-      top: 60px;
-      right: 0px;
-      width: 280px;
-      padding: 0 24px;
-      display: grid;
-      grid-template-rows: 0fr;
-      transition: grid-template-rows 0.4s cubic-bezier(0.85, 0, 0.15, 1);
-    }
-
-    #nav-overlay.open .nav-menu-content {
-      grid-template-rows: 1fr;
-    }
-
-    .nav-menu-inner {
-      overflow: hidden;
-      opacity: 0;
-      filter: blur(8px);
-      transition: opacity 0.4s ease, filter 0.4s ease, transform 0.4s ease;
-      transform: translateY(-10px);
-    }
-
-    #nav-overlay.open .nav-menu-inner {
+    #nav-overlay.open .nav-menu-container {
+      width: 220px;
+      height: auto;
+      max-height: 80vh;
       opacity: 1;
-      filter: blur(0px);
-      transform: translateY(0);
-      transition: opacity 0.4s ease 0.2s, filter 0.4s ease 0.2s, transform 0.4s ease 0.2s;
+      pointer-events: auto;
+    }
+
+    .nav-menu-box {
+      transition: opacity 0.25s ease 0.05s, transform 0.25s ease 0.05s;
+    }
+
+    #nav-overlay.open .nav-menu-box {
+      opacity: 1;
+      transform: scale(1);
     }
 
     /* Dot Menu Toggle Morphing */
@@ -240,9 +217,7 @@
 
   <!-- Top Right Nav Menu -->
   <div id="nav-overlay">
-    <div class="nav-menu-bg pointer-events-auto"></div>
-
-    <div class="absolute top-0 right-0 flex items-center gap-2 pointer-events-auto">
+    <div class="nav-toggle-wrapper absolute top-0 right-0 flex items-center gap-2 pointer-events-auto">
       <!-- Theme Toggle -->
       <button id="theme-toggle-btn"
         class="interactive w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
@@ -258,40 +233,74 @@
         </svg>
       </button>
 
-      <!-- Hamburger (9-Dot Morphing Menu) -->
-      <button id="menu-toggle-btn"
-        class="interactive w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
-        <svg class="text-foreground" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="4" cy="4" r="2" class="dot dot-1"></circle>
-          <circle cx="12" cy="4" r="2" class="dot dot-2"></circle>
-          <circle cx="20" cy="4" r="2" class="dot dot-3"></circle>
-          <circle cx="4" cy="12" r="2" class="dot dot-4"></circle>
-          <circle cx="12" cy="12" r="2" class="dot dot-5"></circle>
-          <circle cx="20" cy="12" r="2" class="dot dot-6"></circle>
-          <circle cx="4" cy="20" r="2" class="dot dot-7"></circle>
-          <circle cx="12" cy="20" r="2" class="dot dot-8"></circle>
-          <circle cx="20" cy="20" r="2" class="dot dot-9"></circle>
-        </svg>
-      </button>
+      <!-- Hamburger Button + Expanding Menu -->
+      <div class="relative">
+        <button id="menu-toggle-btn"
+          class="interactive relative z-20 w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
+          <svg class="text-foreground" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="4" cy="4" r="2" class="dot dot-1"></circle>
+            <circle cx="12" cy="4" r="2" class="dot dot-2"></circle>
+            <circle cx="20" cy="4" r="2" class="dot dot-3"></circle>
+            <circle cx="4" cy="12" r="2" class="dot dot-4"></circle>
+            <circle cx="12" cy="12" r="2" class="dot dot-5"></circle>
+            <circle cx="20" cy="12" r="2" class="dot dot-6"></circle>
+            <circle cx="4" cy="20" r="2" class="dot dot-7"></circle>
+            <circle cx="12" cy="20" r="2" class="dot dot-8"></circle>
+            <circle cx="20" cy="20" r="2" class="dot dot-9"></circle>
+          </svg>
+        </button>
+
+        <!-- Expanding Menu Dropdown from Button -->
+        <div class="nav-menu-container absolute top-full right-0 pt-2 w-0 h-0 overflow-hidden pointer-events-none transition-all duration-300 ease-out z-30"
+             style="transform-origin: top right;">
+          <div class="nav-menu-box bg-background border border-foreground/10 rounded-2xl shadow-xl px-4 py-3 min-w-[200px] opacity-0 scale-95 transition-all duration-300 ease-out"
+               style="transform-origin: top right;">
+            <div class="group/links flex flex-col gap-0 text-foreground text-sm leading-tight font-medium [&_a]:py-1.5 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
+              <a class="interactive current opacity-50 pointer-events-none" href="/">Work</a>
+              <a class="interactive" href="/services">Services</a>
+              <a class="interactive" href="/pricing">Pricing</a>
+              <a class="interactive" href="/approach">Approach</a>
+              <a class="interactive" href="#">Book a Call</a>
+            </div>
+            <div className="h-px w-full bg-foreground/10 my-2"></div>
+            <div class="flex flex-col gap-0 text-foreground text-xs leading-relaxed font-medium">
+              <span class="text-foreground/50 mb-1 text-[9px] tracking-wide uppercase font-semibold">Resources</span>
+              <div class="group/resources flex flex-col gap-0 [&_a]:py-1 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
+                <a class="interactive" href="/blog">Writing</a>
+                <a class="interactive" href="https://x.com/weareoffmenu" target="_blank" rel="noopener noreferrer">Twitter / X</a>
+                <a class="interactive" href="https://linkedin.com/company/offmenudesign" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <a class="interactive" href="/terms">Terms of Service</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
     <!-- Menu Content -->
     <div class="nav-menu-content pointer-events-auto">
-      <div class="nav-menu-inner flex flex-col p-2 min-w-64 overflow-hidden gap-2">
-        <div class="group/links flex flex-col gap-0 text-foreground text-2xl leading-none font-medium [&_a]:pb-1 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
+      <div class="nav-menu-inner flex flex-col p-1.5 overflow-hidden gap-1.5">
+        <div
+          class="group/links flex flex-col gap-0 text-foreground text-sm leading-tight font-medium [&_a]:pb-0.5 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
           <a class="interactive current opacity-50 pointer-events-none" href="/">Work</a>
           <a class="interactive" href="/services">Services</a>
           <a class="interactive" href="/pricing">Pricing</a>
           <a class="interactive" href="/approach">Approach</a>
           <a class="interactive" href="#">Book a Call</a>
         </div>
-        <div class="divider w-full h-4 shrink-0"><div class="divider-line w-full h-1/2 border-b border-foreground/10"></div></div>
-        <div class="flex flex-col gap-1 text-foreground text-sm leading-none tracking-relaxed font-medium">
-          <span class="text-foreground/50 mb-1 text-[10px] tracking-wide uppercase font-semibold">Resources</span>
-          <div class="group/resources flex flex-col gap-0 [&_a]:pb-1.5 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
+        <div class="divider w-full h-2 shrink-0">
+          <div class="divider-line w-full h-1/2 border-b border-foreground/10"></div>
+        </div>
+        <div class="flex flex-col gap-0.5 text-foreground text-xs leading-none tracking-relaxed font-medium">
+          <span class="text-foreground/50 mb-0.5 text-[9px] tracking-wide uppercase font-semibold">Resources</span>
+          <div
+            class="group/resources flex flex-col gap-0 [&_a]:pb-1 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
             <a class="interactive" href="/blog">Writing</a>
-            <a class="interactive" href="https://x.com/weareoffmenu" target="_blank" rel="noopener noreferrer">Twitter / X</a>
-            <a class="interactive" href="https://linkedin.com/company/offmenudesign" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a class="interactive" href="https://x.com/weareoffmenu" target="_blank" rel="noopener noreferrer">Twitter /
+              X</a>
+            <a class="interactive" href="https://linkedin.com/company/offmenudesign" target="_blank"
+              rel="noopener noreferrer">LinkedIn</a>
             <a class="interactive" href="/terms">Terms of Service</a>
           </div>
         </div>
