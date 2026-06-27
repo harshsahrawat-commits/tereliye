@@ -627,7 +627,7 @@
       const lPos = [];
       const lCol = [];
       const conns = [];
-      const nodeConns = Array.from({length: NODES}, () => []);
+      const nodeConns = Array.from({ length: NODES }, () => []);
 
       // Build connections. Core nodes can connect over much longer distances!
       const coreNodes = [];
@@ -642,11 +642,11 @@
           if (connCounts[i] > 18 || connCounts[j] > 18) continue;
 
           const d = nodeVecs[i].distanceTo(nodeVecs[j]);
-          
+
           // Outer shell connects locally. Core connects broadly.
           let allowedDist = MAX_CONN;
           if (nodeDepths[i] < 0.85 || nodeDepths[j] < 0.85) {
-             allowedDist = MAX_CONN * 3.5; 
+            allowedDist = MAX_CONN * 3.5;
           }
 
           if (d < allowedDist) {
@@ -691,7 +691,7 @@
       sigGeom.setAttribute('position', new THREE.BufferAttribute(sigPos, 3));
 
       const sigMat = new THREE.PointsMaterial({
-        size: 1.5,
+        size: 2,
         color: 0xff6600, // Vibrant orange
         map: makeGlowTexture(255, 255, 255, 16), // White core, color tint applied by material
         blending: THREE.AdditiveBlending,
@@ -705,11 +705,11 @@
       const nConns = conns.length / 2;
       // Collect connections that touch the core
       const coreConns = [];
-      for(let i=0; i<nConns; i++) {
-         const nA = conns[i*2], nB = conns[i*2+1];
-         if (nodeDepths[nA] < 0.6 || nodeDepths[nB] < 0.6) coreConns.push(i);
+      for (let i = 0; i < nConns; i++) {
+        const nA = conns[i * 2], nB = conns[i * 2 + 1];
+        if (nodeDepths[nA] < 0.6 || nodeDepths[nB] < 0.6) coreConns.push(i);
       }
-      if(coreConns.length === 0) coreConns.push(0); // fallback
+      if (coreConns.length === 0) coreConns.push(0); // fallback
 
       const sigs = Array.from({ length: N_SIGS }, () => ({
         c: coreConns[Math.floor(Math.random() * coreConns.length)],
