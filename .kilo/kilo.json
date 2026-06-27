@@ -13,7 +13,7 @@
         "@apify/actors-mcp-server"
       ],
       "environment": {
-        "APIFY_TOKEN": "apify_api_6QlUr9v7iA5rhaWEp0UKhJU6cd7O2l1HkLlz"
+        "APIFY_TOKEN": ""
       }
     }
   }
