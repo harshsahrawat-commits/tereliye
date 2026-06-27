@@ -616,7 +616,7 @@
       ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
 
       const ptMat = new THREE.PointsMaterial({
-        size: 5.0, // smaller points for dense mesh
+        size: 2.0, // smaller points for dense mesh
         vertexColors: true,
         map: makeGlowTexture(255, 255, 255),
         blending: THREE.AdditiveBlending,
