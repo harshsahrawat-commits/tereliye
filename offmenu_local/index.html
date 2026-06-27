@@ -800,8 +800,8 @@
 
           if (magnetPoint) {
             const dist = home.distanceTo(magnetPoint);
-            if (dist < 15) {
-              const force = (1 - dist / 15) * 8; // Bulge out by 8 units max
+            if (dist < 25) {
+              const force = (1 - dist / 25) * 18; // Bulge out by 18 units max for a stronger effect
               // Push point outward from center of earth to create a 'swelling' effect
               const dir = home.clone().normalize();
               const target = home.clone().add(dir.multiplyScalar(force));
