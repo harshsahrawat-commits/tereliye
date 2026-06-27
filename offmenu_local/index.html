@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Off Menu - Fibonacci Rebuild</title>
+  <title>bAIyo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -22,6 +22,8 @@
       }
     }
   </script>
+  <!-- Three.js for Neural Earth background -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <!-- Lenis for smooth scrolling -->
   <script src="https://unpkg.com/@studio-freight/lenis@1.0.39/dist/lenis.min.js"></script>
   <style>
@@ -152,23 +154,7 @@
       opacity: 0.15 !important;
     }
 
-    /* Carousel Elements */
-    .carousel-item {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform-origin: center center;
-      transition: opacity 0.3s;
-      will-change: transform;
-    }
 
-    .carousel-item img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      pointer-events: none;
-      border-radius: 9999px;
-    }
 
     /* Heading overlay */
     .center-heading {
@@ -212,12 +198,12 @@
 
   <!-- Header -->
   <header class="fixed top-0 left-0 right-0 z-40 p-6 md:p-8 flex justify-between items-start pointer-events-none">
-    <a href="#" class="interactive text-2xl font-bold tracking-tighter pointer-events-auto">OFFMENU.</a>
+    <a href="#" class="interactive text-2xl font-bold tracking-tighter pointer-events-auto">bAIyo</a>
   </header>
 
   <!-- Top Right Nav Menu -->
   <div id="nav-overlay">
-    <div class="nav-toggle-wrapper absolute top-0 right-0 flex items-center gap-2 pointer-events-auto">
+    <div class="nav-toggle-wrapper absolute top-0 right-0 flex items-center gap-2 pointer-events-auto z-50 p-2">
       <!-- Theme Toggle -->
       <button id="theme-toggle-btn"
         class="interactive w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
@@ -233,69 +219,43 @@
         </svg>
       </button>
 
-      <!-- Hamburger Button + Expanding Menu -->
-      <div class="relative">
-        <button id="menu-toggle-btn"
-          class="interactive relative z-20 w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
-          <svg class="text-foreground" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="4" cy="4" r="2" class="dot dot-1"></circle>
-            <circle cx="12" cy="4" r="2" class="dot dot-2"></circle>
-            <circle cx="20" cy="4" r="2" class="dot dot-3"></circle>
-            <circle cx="4" cy="12" r="2" class="dot dot-4"></circle>
-            <circle cx="12" cy="12" r="2" class="dot dot-5"></circle>
-            <circle cx="20" cy="12" r="2" class="dot dot-6"></circle>
-            <circle cx="4" cy="20" r="2" class="dot dot-7"></circle>
-            <circle cx="12" cy="20" r="2" class="dot dot-8"></circle>
-            <circle cx="20" cy="20" r="2" class="dot dot-9"></circle>
-          </svg>
-        </button>
-
-        <!-- Expanding Menu Dropdown from Button -->
-        <div class="nav-menu-container absolute top-full right-0 pt-2 w-0 h-0 overflow-hidden pointer-events-none transition-all duration-300 ease-out z-30"
-             style="transform-origin: top right;">
-          <div class="nav-menu-box bg-background border border-foreground/10 rounded-2xl shadow-xl px-4 py-3 min-w-[200px] opacity-0 scale-95 transition-all duration-300 ease-out"
-               style="transform-origin: top right;">
-            <div class="group/links flex flex-col gap-0 text-foreground text-sm leading-tight font-medium [&_a]:py-1.5 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
-              <a class="interactive current opacity-50 pointer-events-none" href="/">Work</a>
-              <a class="interactive" href="/services">Services</a>
-              <a class="interactive" href="/pricing">Pricing</a>
-              <a class="interactive" href="/approach">Approach</a>
-              <a class="interactive" href="#">Book a Call</a>
-            </div>
-            <div className="h-px w-full bg-foreground/10 my-2"></div>
-            <div class="flex flex-col gap-0 text-foreground text-xs leading-relaxed font-medium">
-              <span class="text-foreground/50 mb-1 text-[9px] tracking-wide uppercase font-semibold">Resources</span>
-              <div class="group/resources flex flex-col gap-0 [&_a]:py-1 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
-                <a class="interactive" href="/blog">Writing</a>
-                <a class="interactive" href="https://x.com/weareoffmenu" target="_blank" rel="noopener noreferrer">Twitter / X</a>
-                <a class="interactive" href="https://linkedin.com/company/offmenudesign" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-                <a class="interactive" href="/terms">Terms of Service</a>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Hamburger Button -->
+      <button id="menu-toggle-btn"
+        class="interactive w-10 h-10 flex items-center justify-center transition-transform hover:scale-110">
+        <svg class="text-foreground" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="4" cy="4" r="2" class="dot dot-1"></circle>
+          <circle cx="12" cy="4" r="2" class="dot dot-2"></circle>
+          <circle cx="20" cy="4" r="2" class="dot dot-3"></circle>
+          <circle cx="4" cy="12" r="2" class="dot dot-4"></circle>
+          <circle cx="12" cy="12" r="2" class="dot dot-5"></circle>
+          <circle cx="20" cy="12" r="2" class="dot dot-6"></circle>
+          <circle cx="4" cy="20" r="2" class="dot dot-7"></circle>
+          <circle cx="12" cy="20" r="2" class="dot dot-8"></circle>
+          <circle cx="20" cy="20" r="2" class="dot dot-9"></circle>
+        </svg>
+      </button>
     </div>
-  </div>
 
-    <!-- Menu Content -->
-    <div class="nav-menu-content pointer-events-auto">
-      <div class="nav-menu-inner flex flex-col p-1.5 overflow-hidden gap-1.5">
+    <!-- Expanding Menu Dropdown (Background covers buttons, with glassmorphism) -->
+    <div
+      class="nav-menu-container absolute top-0 right-0 w-0 h-0 overflow-hidden pointer-events-none transition-all duration-300 ease-out z-40"
+      style="transform-origin: top right;">
+      <div
+        class="nav-menu-box bg-white/1 dark:bg-black/1 backdrop-blur-sm border border-white/30 dark:border-white/10 rounded-2xl shadow-2xl pt-14 px-4 pb-4 min-w-[200px] opacity-0 scale-95 transition-all duration-300 ease-out"
+        style="transform-origin: top right;">
         <div
-          class="group/links flex flex-col gap-0 text-foreground text-sm leading-tight font-medium [&_a]:pb-0.5 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
+          class="group/links flex flex-col gap-0 text-foreground text-sm leading-tight font-medium [&_a]:py-1.5 [&:has(a:not(.current):hover)_a:not(.current):not(:hover)]:text-foreground/50 [&_a]:transition-colors duration-100">
           <a class="interactive current opacity-50 pointer-events-none" href="/">Work</a>
           <a class="interactive" href="/services">Services</a>
           <a class="interactive" href="/pricing">Pricing</a>
           <a class="interactive" href="/approach">Approach</a>
           <a class="interactive" href="#">Book a Call</a>
         </div>
-        <div class="divider w-full h-2 shrink-0">
-          <div class="divider-line w-full h-1/2 border-b border-foreground/10"></div>
-        </div>
-        <div class="flex flex-col gap-0.5 text-foreground text-xs leading-none tracking-relaxed font-medium">
-          <span class="text-foreground/50 mb-0.5 text-[9px] tracking-wide uppercase font-semibold">Resources</span>
+        <div class="h-px w-full bg-foreground/10 my-2"></div>
+        <div class="flex flex-col gap-0 text-foreground text-xs leading-relaxed font-medium">
+          <span class="text-foreground/50 mb-1 text-[9px] tracking-wide uppercase font-semibold">Resources</span>
           <div
-            class="group/resources flex flex-col gap-0 [&_a]:pb-1 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
+            class="group/resources flex flex-col gap-0 [&_a]:py-1 hover:[&_a]:text-foreground/50 hover:[&_a:hover]:text-foreground [&_a]:transition-colors duration-200">
             <a class="interactive" href="/blog">Writing</a>
             <a class="interactive" href="https://x.com/weareoffmenu" target="_blank" rel="noopener noreferrer">Twitter /
               X</a>
@@ -308,19 +268,9 @@
     </div>
   </div>
 
-  <!-- Central Heading (behind carousel) -->
-  <div class="center-heading flex flex-col items-center gap-1 w-full px-4">
-    <h1 class="text-2xl md:text-3xl lg:text-4xl font-medium leading-tight tracking-tight text-center max-w-2xl">
-      AI-native studio building brands and web experiences for high-growth startups
-    </h1>
-  </div>
 
-  <!-- Carousel Area -->
-  <main id="carousel-container" class="absolute inset-0 w-full h-full flex items-center justify-center touch-none">
-    <div id="carousel-track" class="relative w-full h-full">
-      <!-- Items generated by JS -->
-    </div>
-  </main>
+
+
 
   <script>
     /* =========================================================================
@@ -392,23 +342,7 @@
       }
     });
 
-    /* =========================================================================
-       3. 3D Fibonacci Logarithmic Spiral Carousel
-       ========================================================================= */
-    const track = document.getElementById('carousel-track');
 
-    // Project Data
-    const projects = [
-      { name: 'Resonant', src: 'images/work/resonant/thumbnail-light-xs@2x.webp', url: 'work/resonant.html' },
-      { name: 'Control Tower', src: 'images/work/controltower/thumbnail-light-xs@2x.webp', url: 'work/controltower.html' },
-      { name: 'Ditto', src: 'images/work/ditto/thumbnail-light-xs@2x.webp', url: 'work/ditto.html' },
-      { name: 'Hanover Park', src: 'images/work/hanover-park/thumbnail-light-xs@2x.webp', url: 'work/hanover-park.html' },
-      { name: 'Superintelligent', src: 'images/work/super/thumbnail-light-xs@2x.webp', url: 'work/super.html' },
-      { name: 'Tenacity', src: 'images/work/tenacity/thumbnail-light-xs@2x.webp', url: 'work/tenacity.html' },
-      { name: 'Utility', src: 'images/work/utility/thumbnail-light-xs@2x.webp', url: 'work/utility.html' },
-      { name: 'Flex', src: 'images/work/flex/thumbnail-light-xs@2x.webp', url: 'work/flex.html' },
-      { name: 'ClosetNow', src: 'images/work/closetnow/closetnow-gallery-01@2x.webp', url: 'work/closetnow.html' }
-    ];
 
     // Create DOM elements
     const itemElements = projects.map((proj, i) => {
@@ -534,6 +468,252 @@
       document.body.classList.remove('grabbing');
     });
 
+  </script>
+
+  <!-- Neural Earth Background -->
+  <script>
+    // ─────────────────────────────────────────────────────────────
+    //  NEURAL EARTH — Volumetric Core
+    // ─────────────────────────────────────────────────────────────
+
+    const NODES = 800;   // total neurons
+    const RADIUS = 62;    // globe radius (world units)
+    const MAX_CONN = 22;    // max distance to form a synapse
+    const N_SIGS = 90;    // simultaneous signal pulses
+    const CAM_Z = 185;   // initial camera depth
+    const AUTO_ROT = 0.0016; // radians/frame auto-rotate speed
+    const STAR_COUNT = 2000;
+
+    const scene = new THREE.Scene();
+    const H = 1400; // Fixed size for the globe
+    const W = 1400;
+    const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 1000);
+    camera.position.z = CAM_Z;
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // transparent to blend
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setClearColor(0x000000, 0); // Fully transparent background!
+
+    // Make it a fixed, centered element
+    const canvas = renderer.domElement;
+    canvas.style.position = 'fixed';
+    canvas.style.top = '50%';
+    canvas.style.left = '50%';
+    canvas.style.transform = 'translate(-50%, -50%)';
+    canvas.style.zIndex = '-10'; // Behind everything
+    // Setting pointer-events to none so it doesn't block the carousel interactions
+    canvas.style.pointerEvents = 'none';
+    document.body.appendChild(canvas);
+
+    const layerColor = (nR) => {
+      if (nR < 0.15) return new THREE.Color(1.0, 1.0, 0.67);
+      if (nR < 0.35) return new THREE.Color(1.0, 0.53, 0.0);
+      if (nR < 0.60) return new THREE.Color(0.8, 0.14, 0.04);
+      if (nR < 0.82) return new THREE.Color(0.0, 0.67, 0.47);
+      return new THREE.Color(0.03, 0.47, 0.93);
+    };
+
+    const makeGlowTexture = (r, g, b, sz = 32) => {
+      const c = document.createElement('canvas');
+      c.width = c.height = sz;
+      const ctx = c.getContext('2d');
+      const h = sz / 2;
+      const gr = ctx.createRadialGradient(h, h, 0, h, h, h);
+      gr.addColorStop(0, `rgba(${r},${g},${b},1)`);
+      gr.addColorStop(0.35, `rgba(${r},${g},${b},0.55)`);
+      gr.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = gr;
+      ctx.fillRect(0, 0, sz, sz);
+      return new THREE.CanvasTexture(c);
+    };
+
+    const earthGrp = new THREE.Group();
+    scene.add(earthGrp);
+
+    const nodeVecs = [];
+    const nodeDepths = [];
+
+    for (let i = 0; i < NODES; i++) {
+      const phi = Math.acos(-1 + (2 * i) / NODES);
+      const theta = Math.sqrt(NODES * Math.PI) * phi;
+      const r = RADIUS * Math.cbrt(Math.random());
+
+      nodeVecs.push(new THREE.Vector3(
+        r * Math.sin(phi) * Math.cos(theta),
+        r * Math.sin(phi) * Math.sin(theta),
+        r * Math.cos(phi)
+      ));
+      nodeDepths.push(r / RADIUS);
+    }
+
+    const ptPos = new Float32Array(NODES * 3);
+    const ptCol = new Float32Array(NODES * 3);
+
+    for (let i = 0; i < NODES; i++) {
+      const v = nodeVecs[i];
+      ptPos[i * 3] = v.x;
+      ptPos[i * 3 + 1] = v.y;
+      ptPos[i * 3 + 2] = v.z;
+
+      const c = layerColor(nodeDepths[i]);
+      ptCol[i * 3] = c.r;
+      ptCol[i * 3 + 1] = c.g;
+      ptCol[i * 3 + 2] = c.b;
+    }
+
+    const ptGeom = new THREE.BufferGeometry();
+    ptGeom.setAttribute('position', new THREE.BufferAttribute(ptPos, 3));
+    ptGeom.setAttribute('color', new THREE.BufferAttribute(ptCol, 3));
+
+    const ptMat = new THREE.PointsMaterial({
+      size: 2.5,
+      vertexColors: true,
+      map: makeGlowTexture(255, 255, 255),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+    });
+
+    earthGrp.add(new THREE.Points(ptGeom, ptMat));
+
+    const lPos = [];
+    const lCol = [];
+    const conns = [];
+
+    for (let i = 0; i < NODES; i++) {
+      for (let j = i + 1; j < NODES; j++) {
+        const d = nodeVecs[i].distanceTo(nodeVecs[j]);
+        if (d < MAX_CONN) {
+          lPos.push(
+            nodeVecs[i].x, nodeVecs[i].y, nodeVecs[i].z,
+            nodeVecs[j].x, nodeVecs[j].y, nodeVecs[j].z,
+          );
+
+          const a = (1 - d / MAX_CONN) * 0.42;
+          const ci = layerColor(nodeDepths[i]);
+          const cj = layerColor(nodeDepths[j]);
+          lCol.push(ci.r * a, ci.g * a, ci.b * a,
+            cj.r * a, cj.g * a, cj.b * a);
+
+          conns.push(i, j);
+        }
+      }
+    }
+
+    const lineGeom = new THREE.BufferGeometry();
+    lineGeom.setAttribute('position', new THREE.Float32BufferAttribute(lPos, 3));
+    lineGeom.setAttribute('color', new THREE.Float32BufferAttribute(lCol, 3));
+
+    const lineMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+    });
+
+    earthGrp.add(new THREE.LineSegments(lineGeom, lineMat));
+
+    // Blue boundaries (outer wireframe and atmospheric shell) removed as requested
+
+    const sigPos = new Float32Array(N_SIGS * 3);
+    const sigGeom = new THREE.BufferGeometry();
+    sigGeom.setAttribute('position', new THREE.BufferAttribute(sigPos, 3));
+
+    const sigMat = new THREE.PointsMaterial({
+      size: 5,
+      color: 0xffffff,
+      map: makeGlowTexture(255, 255, 200, 16),
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+    });
+
+    earthGrp.add(new THREE.Points(sigGeom, sigMat));
+
+    const nConns = conns.length / 2;
+
+    const sigs = Array.from({ length: N_SIGS }, () => ({
+      c: Math.floor(Math.random() * nConns),
+      t: Math.random(),
+      s: 0.006 + Math.random() * 0.016,
+      d: Math.random() > 0.5 ? 1 : -1,
+    }));
+
+    // (Star field removed so only the globe is visible)
+
+    let dragGlobe = false;
+    let prevGlobe = { x: 0, y: 0 };
+    let userRX = 0, userRY = 0, autoY = 0;
+
+    canvas.addEventListener('mousedown', e => {
+      dragGlobe = true;
+      prevGlobe = { x: e.clientX, y: e.clientY };
+    });
+    window.addEventListener('mouseup', () => { dragGlobe = false; });
+    window.addEventListener('mousemove', e => {
+      if (!dragGlobe) return;
+      userRY += (e.clientX - prevGlobe.x) * 0.005;
+      userRX += (e.clientY - prevGlobe.y) * 0.005;
+      userRX = Math.max(-1.4, Math.min(1.4, userRX));
+      prevGlobe = { x: e.clientX, y: e.clientY };
+    });
+
+    canvas.addEventListener('wheel', e => {
+      camera.position.z = Math.max(95, Math.min(350, camera.position.z + e.deltaY * 0.07));
+    }, { passive: true });
+
+    canvas.addEventListener('touchstart', e => {
+      dragGlobe = true;
+      prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }, { passive: true });
+    window.addEventListener('touchend', () => { dragGlobe = false; });
+    window.addEventListener('touchmove', e => {
+      if (!dragGlobe) return;
+      e.preventDefault();
+      userRY += (e.touches[0].clientX - prevGlobe.x) * 0.005;
+      userRX += (e.touches[0].clientY - prevGlobe.y) * 0.005;
+      userRX = Math.max(-1.4, Math.min(1.4, userRX));
+      prevGlobe = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }, { passive: false });
+
+    const animateGlobe = (time) => {
+      requestAnimationFrame(animateGlobe);
+      const t = time * 0.001;
+
+      autoY += AUTO_ROT;
+      earthGrp.rotation.y = userRY + autoY;
+      earthGrp.rotation.x = userRX;
+
+      for (let s = 0; s < N_SIGS; s++) {
+        const sg = sigs[s];
+        sg.t += sg.s * sg.d;
+
+        if (sg.t > 1 || sg.t < 0) {
+          sg.c = Math.floor(Math.random() * nConns);
+          sg.t = sg.d > 0 ? 0 : 1;
+          sg.s = 0.006 + Math.random() * 0.018;
+          sg.d = Math.random() > 0.5 ? 1 : -1;
+        }
+
+        const ci = conns[sg.c * 2];
+        const cj = conns[sg.c * 2 + 1];
+        const a = nodeVecs[ci];
+        const b = nodeVecs[cj];
+
+        sigPos[s * 3] = a.x + (b.x - a.x) * sg.t;
+        sigPos[s * 3 + 1] = a.y + (b.y - a.y) * sg.t;
+        sigPos[s * 3 + 2] = a.z + (b.z - a.z) * sg.t;
+      }
+      sigGeom.attributes.position.needsUpdate = true;
+      sigMat.size = 4 + Math.sin(t * 2.8) * 1.8;
+
+      renderer.render(scene, camera);
+    };
+
+    requestAnimationFrame(animateGlobe);
+
+    // (Resize listener removed since canvas is fixed size)
   </script>
 </body>
 
